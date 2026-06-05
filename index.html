@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkBuddy 量化回测工具</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--p:#2563eb;--g:#10b981;--r:#ef4444;--sb:#111827;--bg:#f3f4f6;--c:#fff;--b:#e5e7eb;--t:#374151;--t2:#6b7280;--r_:10px;--s:0 1px 3px rgba(0,0,0,.08)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--t);font-size:14px;margin:0}
+.app{display:flex;height:100vh;overflow:hidden}
+.main{flex:1;overflow-y:auto;padding:24px}
+.sb{width:240px;background:var(--sb);color:rgba(255,255,255,.55);display:flex;flex-direction:column;flex-shrink:0}
+.sb-h{display:flex;align-items:center;gap:10px;padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-t{color:#fff;font-weight:600;font-size:15px}.sb-s{font-size:11px;letter-spacing:1px;opacity:.5}
+.sb-n{flex:1;overflow-y:auto;padding:8px 0}
+.ng{margin-bottom:4px}.ng-t{font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:12px 16px 4px;opacity:.4;font-weight:500}
+.ni{display:flex;align-items:center;gap:8px;padding:7px 16px;cursor:pointer;transition:all .15s;font-size:13px;border-radius:6px;margin:1px 8px}
+.ni:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.ni.a{background:rgba(37,99,235,.25);color:#fff;font-weight:500}
+.ni-i{font-size:15px;width:20px;text-align:center}
+.bdg{font-size:10px;background:#2563eb;color:#fff;padding:1px 6px;border-radius:8px;margin-left:auto;font-weight:600}
+.sb-f{padding:12px 16px;font-size:12px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}.dot.on{background:var(--g)}.dot.off{background:var(--r)}
+.pg{display:none}.pg.a{display:block}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.ph h1{font-size:22px;font-weight:600;color:#111}
+.sub{color:var(--t2);font-size:13px;margin-top:2px}
+.hb{display:flex;gap:8px}
+.bp{background:var(--p);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500}
+.bo{background:#fff;color:var(--t);border:1px solid var(--b);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px}
+.bs{background:#fff;color:var(--t);border:1px solid var(--b);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px}
+.kr{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kp{background:var(--c);border-radius:var(--r_);padding:16px;box-shadow:var(--s);border:1px solid var(--b);display:flex;align-items:center;gap:12px}
+.ki{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.kl{font-size:12px;color:var(--t2);margin-bottom:2px}.kv{font-size:24px;font-weight:700}
+.cd{background:var(--c);border-radius:var(--r_);padding:16px;box-shadow:var(--s);border:1px solid var(--b)}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-weight:600;font-size:14px}
+.tg{font-size:11px;background:#f3f4f6;padding:3px 8px;border-radius:6px;color:var(--t2);font-weight:400}
+.r2{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:16px}
+.r3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mi{background:#f9fafb;border-radius:8px;padding:12px;text-align:center}
+.ml{display:block;font-size:11px;color:var(--t2);margin-bottom:4px}.mv{font-size:18px;font-weight:700}
+.tabs{display:flex;gap:2px;background:#f3f4f6;border-radius:6px;padding:2px}
+.tab{background:none;border:none;padding:4px 10px;font-size:12px;border-radius:4px;cursor:pointer;color:var(--t2)}
+.tab.a{background:#fff;color:var(--t);font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.ls{display:flex;flex-direction:column}
+.lr{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #f3f4f6;font-size:13px;gap:8px}
+.lr:last-child{border-bottom:none}.lr .r{margin-left:auto;font-size:12px;color:var(--t2)}
+.sd{display:inline-block;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600}
+.sd.b{background:#dcfce7;color:#15803d}.sd.s{background:#fee2e2;color:#dc2626}
+.sym{font-weight:500}.amt{margin-left:auto;font-weight:600;font-size:13px}
+/* Editor */
+.ep{display:flex;gap:0;padding:0;height:calc(100vh - 48px)}
+.es{width:220px;background:#fafafa;border-right:1px solid var(--b);flex-shrink:0;overflow-y:auto}
+.eh{padding:12px 14px;font-size:12px;font-weight:600;color:var(--t2);border-bottom:1px solid var(--b)}
+.ef{display:flex;gap:8px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px}
+.ef:hover{background:#f3f4f6}.ef.a{background:#eff6ff;border-left:3px solid var(--p)}
+.efn{font-weight:500;font-size:13px}.efd{font-size:11px;color:var(--t2);margin-top:2px}
+.em{flex:1;display:flex;flex-direction:column}
+.et{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-bottom:1px solid var(--b);font-size:13px;font-weight:500}
+.et>div{display:flex;gap:8px}
+.code{flex:1;margin:0;padding:16px;background:#1e1e1e;color:#d4d4d4;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:1.7;overflow:auto;border-radius:0;white-space:pre}
+/* Config */
+.cr{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cfg h3{font-size:15px;font-weight:600;margin-bottom:16px;color:#111}
+.cfg label{display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:4px;margin-top:12px}
+.cfg label:first-of-type{margin-top:0}
+.sel,.inp{width:100%;padding:8px 10px;border:1px solid var(--b);border-radius:6px;font-size:13px;background:#fff}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.radio{display:flex;gap:16px;margin-top:6px}
+.radio label{display:flex;align-items:center;gap:4px;margin:0;font-size:13px;color:var(--t)}
+/* Data src */
+.sr{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.sc{background:var(--c);border-radius:var(--r_);padding:16px;box-shadow:var(--s);border:1px solid var(--b)}
+.st{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.si{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sn{font-weight:600;font-size:14px}.sd2{font-size:12px;color:var(--t2)}
+.ss{display:flex;justify-content:space-between;font-size:12px;color:var(--t2);margin-bottom:12px}
+/* Table */
+.tb{width:100%;border-collapse:collapse;font-size:13px}
+.tb th{text-align:left;padding:10px 12px;font-weight:500;color:var(--t2);font-size:12px;border-bottom:1px solid var(--b);background:#fafafa}
+.tb td{padding:10px 12px;border-bottom:1px solid #f3f4f6}
+.tb tr:hover td{background:#f9fafb}
+/* Heatmap */
+.hm{display:flex;flex-direction:column;gap:3px}
+.hr{display:flex;gap:3px}
+.hc{width:72px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:12px;font-weight:500;background:#f3f4f6}
+.hc.y{font-weight:600;background:none;color:var(--t2)}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sb">
+  <div class="sb-h">
+    <svg viewBox="0 0 34 34" width="32" height="32" fill="none"><rect x="2" y="2" width="30" height="30" rx="10" fill="#2563eb"/><path d="M9 21L13.5 14.5 18 18 25 9" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><div class="sb-t">WorkBuddy</div><div class="sb-s">QUANT BACKTEST</div></div>
+  </div>
+  <nav class="sb-n" id="nav"></nav>
+  <div class="sb-f"><span class="dot on"></span> Python 已连接</div>
+</aside>
+<main class="main" id="main"></main>
+</div>
+<script>
+// ── 数据 ──
+const NAV=[
+{g:'概览',i:[{id:'dashboard',l:'仪表板',ic:'📊'}]},
+{g:'策略',i:[{id:'editor',l:'策略编辑',ic:'✏️'},{id:'examples',l:'示例策略库',ic:'📚'},{id:'indicators',l:'自定义指标',ic:'📈'},{id:'ai',l:'AI 策略生成',ic:'🤖',b:'NEW'}]},
+{g:'回测',i:[{id:'backtest',l:'回测配置',ic:'⚙️'},{id:'debug',l:'策略调试',ic:'🔍'},{id:'optimize',l:'参数优化',ic:'🎯'}]},
+{g:'分析',i:[{id:'analysis',l:'绩效分析',ic:'📉'},{id:'history',l:'回测历史',ic:'📋'},{id:'walkforward',l:'Walk-Forward',ic:'🔄'},{id:'compare',l:'多标的对比',ic:'🔀'}]},
+{g:'数据',i:[{id:'data',l:'数据管理',ic:'💾'},{id:'scheduler',l:'更新调度',ic:'⏰'}]}
+];
+const STRATS=[
+{n:'dual_ma_strategy.py',d:'双均线策略',s:'短期均线上穿长期均线时买入'},
+{n:'rsi_strategy.py',d:'RSI 策略',s:'RSI 低于30买入，高于70卖出'},
+{n:'bollinger_strategy.py',d:'布林带策略',s:'价格突破下轨买入'},
+{n:'macd_strategy.py',d:'MACD 策略',s:'MACD 金叉买入，死叉卖出'},
+{n:'momentum_strategy.py',d:'动量策略',s:'追踪N日涨幅，正动量买入'},
+{n:'grid_strategy.py',d:'网格交易策略',s:'价格区间内等间距挂单'}
+];
+const CODE=`from strategy.strategy_base import StrategyBase, StrategyParam
+
+class MyStrategy(StrategyBase):
+    def on_init(self):
+        self.define_params(
+            StrategyParam('fast_period', '快线周期', 'int',
+                          default=5, min_val=2, max_val=50),
+            StrategyParam('slow_period', '慢线周期', 'int',
+                          default=20, min_val=5, max_val=200),
+        )
+
+    def on_bar(self, bar):
+        fast = self.sma(self.params['fast_period'])
+        slow = self.sma(self.params['slow_period'])
+        if fast and slow:
+            if fast > slow and bar['close'] > fast:
+                self.order_percent(bar['symbol'], 1.0)
+            elif fast < slow:
+                self.order_percent(bar['symbol'], 0.0)`;
+const TRADES=[
+{d:'2025-05-28',s:'上证50ETF',side:'B',a:2847},{d:'2025-05-27',s:'宁德时代',side:'S',a:21850},
+{d:'2025-05-25',s:'沪深300ETF',side:'B',a:7824},{d:'2025-05-22',s:'贵州茅台',side:'S',a:16800},
+{d:'2025-05-20',s:'宁德时代',side:'B',a:21530}
+];
+const DLIST=[
+{s:'000001.SZ',c:1320,st:'2020-01-02',e:'2025-06-04'},{s:'000002.SZ',c:1320,st:'2020-01-02',e:'2025-06-04'},
+{s:'000333.SZ',c:1320,st:'2020-01-02',e:'2025-06-04'},{s:'000651.SZ',c:1320,st:'2020-01-02',e:'2025-06-04'},
+{s:'000858.SZ',c:1320,st:'2020-01-02',e:'2025-06-04'},{s:'002415.SZ',c:1320,st:'2020-01-02',e:'2025-06-04'},
+{s:'300750.SZ',c:1320,st:'2020-01-02',e:'2025-06-04'},{s:'600519.SH',c:1320,st:'2020-01-02',e:'2025-06-04'},
+{s:'601318.SH',c:1320,st:'2020-01-02',e:'2025-06-04'},{s:'601398.SH',c:1320,st:'2020-01-02',e:'2025-06-04'}
+];
+
+// 权益曲线
+let eqPts='';{let eq=100000,pts=[];for(let i=0;i<250;i++){eq*=1+(Math.random()-.48)*.015;eq=Math.max(eq,60000);pts.push([(i/249)*800,200-((eq-60000)/100000)*180])}
+eqPts=pts.map((p,i)=>`${i?'L':'M'}${p[0]},${p[1]}`).join(' ')}
+const eqArea=eqPts+' L800,200 L0,200 Z';
+
+function eqChart(){
+  return `<svg viewBox="0 0 800 220" style="width:100%;height:200"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2563eb" stop-opacity=".15"/><stop offset="100%" stop-color="#2563eb" stop-opacity=".01"/></linearGradient></defs><path d="${eqArea}" fill="url(#ag)"/><path d="${eqPts}" fill="none" stroke="#2563eb" stroke-width="2"/></svg>`
+}
+
+// ── 页面 ──
+const PAGES={
+dashboard(){
+  return `<div class="ph"><div><h1>仪表板</h1><p class="sub">今日概览 · 2025年6月5日</p></div><div class="hb"><button class="bo">📥 导入数据</button><button class="bp">▶ 运行回测</button></div></div>
+  <div class="kr">${[['📈','总收益率','+18.42%','#10b981','#dbeafe'],['⚖️','夏普比率','1.86','#333','#fef3c7'],['📉','最大回撤','-8.73%','#ef4444','#fee2e2'],['📊','交易次数','47','#333','#ede9fe']].map(([i,l,v,c,b])=>`<div class="kp"><div class="ki" style="background:${b}">${i}</div><div><div class="kl">${l}</div><div class="kv" style="color:${c}">${v}</div></div></div>`).join('')}</div>
+  <div class="r2"><div class="cd"><div class="ch"><span>📈 权益曲线</span><div class="tabs">${['1月','3月','6月','全部'].map(t=>`<button class="tab a">${t}</button>`).join('')}</div></div>${eqChart()}</div>
+  <div class="cd"><div class="ch"><span>🎯 核心指标</span><span class="tg">双均线策略</span></div><div class="mg">${[['年化收益','+12.68%','#10b981'],['最大回撤','-8.73%','#ef4444'],['夏普比率','1.86','#333'],['胜率','+65.96%','#10b981'],['盈亏比','2.14','#333'],['卡玛比率','1.45','#333']].map(([l,v,c])=>`<div class="mi"><span class="ml">${l}</span><span class="mv" style="color:${c}">${v}</span></div>`).join('')}</div></div></div>
+  <div class="r3">
+  <div class="cd"><div class="ch"><span>📋 最近交易</span><span class="tg">今日 4 笔</span></div><div class="ls">${TRADES.map(t=>`<div class="lr"><span class="sd ${t.side==='B'?'b':'s'}">${t.side==='B'?'买':'卖'}</span><span class="sym">${t.s}</span><span class="amt" style="color:${t.side==='B'?'#10b981':'#ef4444'}">${t.side==='B'?'+':'-'}¥${t.a.toLocaleString()}</span></div>`).join('')}</div></div>
+  <div class="cd"><div class="ch"><span>🌐 数据状态</span><span class="tg">3 个数据源</span></div><div class="ls"><div class="lr"><span class="dot on"></span> AKShare <span class="r">在线 · 4,872</span></div><div class="lr"><span class="dot on"></span> Yahoo Finance <span class="r">在线 · 1,256</span></div><div class="lr"><span class="dot off"></span> Tushare <span class="r">离线 · 需要 Token</span></div></div></div>
+  <div class="cd"><div class="ch"><span>📑 策略列表</span><span class="tg">4 个策略</span></div><div class="ls">${[['双均线策略','+18.42%','#10b981'],['布林带策略','+12.06%','#10b981'],['动量策略','+8.91%','#10b981'],['网格交易策略','-2.34%','#ef4444']].map(([n,v,c])=>`<div class="lr"><span>${n}</span><span style="color:${c}">${v}</span></div>`).join('')}</div></div></div>`
+},
+editor(){
+  return `<div class="ep"><div class="es"><div class="eh">策略文件</div>${STRATS.map((s,i)=>`<div class="ef${i===0?' a':''}" data-i="${i}"><span>🐍</span><div><div class="efn">${s.d}</div><div class="efd">${s.s}</div></div></div>`).join('')}</div>
+  <div class="em"><div class="et"><span id="fname">${STRATS[0].n}</span><div><button class="bs">💾 保存</button><button class="bs bp">▶ 运行</button></div></div><div class="code">${CODE}</div></div></div>`
+},
+backtest(){
+  return `<div class="ph"><div><h1>回测配置</h1><p class="sub">配置策略参数并运行回测</p></div><button class="bp">▶ 运行回测</button></div>
+  <div class="cr"><div class="cd cfg"><h3>策略设置</h3><label>选择策略</label><select class="sel"><option>双均线策略</option><option>RSI 策略</option><option>布林带策略</option></select>
+  <div class="fr"><div><label>快线周期</label><input type="number" value="5" class="inp"></div><div><label>慢线周期</label><input type="number" value="20" class="inp"></div></div></div>
+  <div class="cd cfg"><h3>回测参数</h3><div class="fr"><div><label>开始日期</label><input type="date" value="2024-01-02" class="inp"></div><div><label>结束日期</label><input type="date" value="2025-06-04" class="inp"></div></div>
+  <div class="fr"><div><label>初始资金</label><input type="number" value="100000" class="inp"></div><div><label>手续费率</label><input type="number" value="0.0003" step="0.0001" class="inp"></div></div>
+  <label>引擎类型</label><div class="radio"><label><input type="radio" name="e" checked> 标准引擎</label><label><input type="radio" name="e"> 向量化引擎</label></div></div></div>`
+},
+analysis(){
+  const mo=['1月','2月','3月','4月','5月','6月'],yr=['2022','2023','2024','2025'];
+  const dt=[[2.1,-1.3,3.5,1.8,-0.5,2.7],[1.2,3.8,-2.1,0.9,4.2,-1.7],[-0.8,1.5,2.3,-1.2,3.1,0.6],[3.2,-0.4,1.7,2.8,-2.5,1.3]];
+  return `<div class="ph"><div><h1>绩效分析</h1><p class="sub">策略回测结果详细分析</p></div></div>
+  <div class="kr" style="margin-bottom:16px">${[['年化收益','+12.68%','#10b981'],['最大回撤','-8.73%','#ef4444'],['夏普比率','1.86','#333'],['总交易','47','#333']].map(([l,v,c])=>`<div class="kp"><div><div class="kl">${l}</div><div class="kv" style="color:${c}">${v}</div></div></div>`).join('')}</div>
+  <div class="cd" style="margin-bottom:16px"><div class="ch"><span>📈 权益曲线</span></div>${eqChart()}</div>
+  <div class="cd"><div class="ch"><span>🗓️ 月度收益热力图</span></div><div class="hm"><div class="hr"><div class="hc"></div>${mo.map(m=>`<div class="hc">${m}</div>`).join('')}</div>${dt.map((row,ri)=>`<div class="hr"><div class="hc y">${yr[ri]}</div>${row.map(v=>{const bg=v>0?`rgba(16,185,129,${Math.min(v/5,1)*.8+.1})`:`rgba(239,68,68,${Math.min(Math.abs(v)/5,1)*.8+.1})`;return `<div class="hc" style="background:${bg};color:${Math.abs(v)>2?'#fff':'#374151'}">${v>0?'+':''}${v.toFixed(1)}%</div>`}).join('')}</div>`).join('')}</div></div>`
+},
+data(){
+  return `<div class="ph"><div><h1>数据管理</h1><p class="sub">管理市场数据源和标的</p></div></div>
+  <div class="sr">${[['🔗','AKShare','免费开源A股数据','#dbeafe','#2563eb','4,872',true],['🌍','Yahoo Finance','全球市场数据','#fef3c7','#d97706','1,256',true],['🔑','Tushare','需要 API Token','#fee2e2','#dc2626','5,000+',false]].map(([i,n,d,b,c,ct,on])=>`<div class="sc"><div class="st"><div class="si" style="background:${b};color:${c}">${i}</div><div><div class="sn">${n}</div><div class="sd2">${d}</div></div></div><div class="ss"><span>${ct} 只标的</span><span><span class="dot ${on?'on':'off'}"></span> ${on?'在线':'需配置'}</span></div><button class="bo" style="width:100%">${on?'获取数据':'配置 Token'}</button></div>`).join('')}</div>
+  <div class="cd" style="margin-top:16px"><div class="ch"><span>📁 已导入数据</span><span class="tg">10 只标的</span></div><table class="tb"><thead><tr><th>标的代码</th><th>数据条数</th><th>起始日期</th><th>结束日期</th><th>操作</th></tr></thead><tbody>${DLIST.map(d=>`<tr><td class="sym">${d.s}</td><td>${d.c.toLocaleString()}</td><td>${d.st}</td><td>${d.e}</td><td><button class="bs">查看</button></td></tr>`).join('')}</tbody></table></div>`
+},
+examples(){
+  return `<div class="ph"><div><h1>示例策略库</h1><p class="sub">内置策略模板，快速上手</p></div></div>
+  <div class="sr">${[['📊','双均线策略','经典趋势跟踪，短期均线上穿长期均线买入','18.42%','#10b981'],['📉','RSI 策略','超买超卖反转，RSI<30买入 >70卖出','12.56%','#10b981'],['📈','布林带策略','均值回归，价格突破下轨买入','9.87%','#10b981'],['📉','MACD 策略','趋势跟踪，金叉买入死叉卖出','21.34%','#10b981'],['📊','动量策略','追涨杀跌，正动量时持仓','8.91%','#10b981'],['💹','网格交易','区间震荡，等间距挂单','-2.34%','#ef4444']].map(([i,n,d,v,c])=>`<div class="sc"><div class="st"><div class="si" style="background:#dbeafe;color:#2563eb">${i}</div><div><div class="sn">${n}</div><div class="sd2">${d}</div></div></div><div class="ss"><span>回测收益</span><span style="color:${c};font-weight:600">${v}</span></div><button class="bo" style="width:100%">查看代码</button></div>`).join('')}</div>`
+},
+indicators(){
+  return `<div class="ph"><div><h1>自定义指标</h1><p class="sub">管理和创建技术指标</p></div><button class="bp">+ 新建指标</button></div>
+  <div class="cd"><div class="ch"><span>📦 已有指标</span><span class="tg">8 个</span></div><table class="tb"><thead><tr><th>名称</th><th>类型</th><th>参数</th><th>描述</th><th>操作</th></tr></thead><tbody>
+  ${[['SMA','移动平均','period','简单移动平均线'],['EMA','移动平均','period','指数移动平均线'],['RSI','震荡指标','period','相对强弱指标'],['MACD','趋势指标','fast,slow,signal','移动平均收敛发散'],['ATR','波动指标','period','平均真实波幅'],['KDJ','震荡指标','period','随机指标'],['布林带','通道指标','period,num_std','价格通道'],['威廉指标','震荡指标','period','威廉 %R']].map(([n,t,p,d])=>`<tr><td class="sym">${n}</td><td><span class="tg">${t}</span></td><td style="font-family:monospace;font-size:12px">${p}</td><td>${d}</td><td><button class="bs">编辑</button></td></tr>`).join('')}</tbody></table></div>`
+},
+ai(){
+  return `<div class="ph"><div><h1>AI 策略生成</h1><p class="sub">用自然语言描述策略，AI 自动生成代码</p></div></div>
+  <div class="cd" style="margin-bottom:16px"><div class="ch"><span>💬 策略描述</span></div>
+  <textarea style="width:100%;height:100px;border:1px solid var(--b);border-radius:8px;padding:12px;font-size:13px;resize:vertical;font-family:inherit" placeholder="例如：编写一个双均线策略，当5日均线上穿20日均线时全仓买入，下穿时清仓卖出..."></textarea>
+  <div style="margin-top:12px;display:flex;gap:8px"><button class="bp">🤖 生成策略</button><button class="bo">📋 从模板生成</button></div></div>
+  <div class="cd"><div class="ch"><span>📝 生成结果</span></div><div class="code" style="border-radius:8px;min-height:200px;display:flex;align-items:center;justify-content:center;color:var(--t2)">输入策略描述后点击"生成策略"按钮</div></div>`
+},
+debug(){
+  return `<div class="ph"><div><h1>策略调试</h1><p class="sub">逐步执行策略，观察每根K线的决策过程</p></div><div class="hb"><button class="bo">⏸ 暂停</button><button class="bo">⏭ 下一根</button><button class="bp">▶ 继续</button><button class="bo" style="color:#ef4444">⏹ 停止</button></div></div>
+  <div class="r2"><div class="cd"><div class="ch"><span>📊 K线数据</span><span class="tg">当前: 2025-03-15</span></div>
+  <table class="tb"><thead><tr><th>日期</th><th>开盘</th><th>最高</th><th>最低</th><th>收盘</th><th>成交量</th></tr></thead><tbody>
+  ${[['2025-03-13','15.23','15.80','15.10','15.65','12,340'],['2025-03-14','15.70','16.05','15.55','15.92','15,670'],['2025-03-15','15.95','16.20','15.80','16.12','18,920']].map(r=>`<tr>${r.map((v,i)=>`<td${i===5?' style="font-family:monospace"':''}>${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+  <div class="cd"><div class="ch"><span>🔍 决策日志</span></div><div class="ls">
+  <div class="lr"><span style="color:var(--t2);font-size:11px;width:60px">15:03:21</span><span class="sd b">买入</span><span>上证50ETF 1000股 @ 2.847</span></div>
+  <div class="lr"><span style="color:var(--t2);font-size:11px;width:60px">15:03:21</span><span style="color:var(--t2)">指标</span><span>SMA(5)=15.92, SMA(20)=15.45</span></div>
+  <div class="lr"><span style="color:var(--t2);font-size:11px;width:60px">15:03:21</span><span style="color:var(--t2)">条件</span><span>fast > slow && close > fast → 买入</span></div>
+  <div class="lr"><span style="color:var(--t2);font-size:11px;width:60px">15:02:15</span><span style="color:var(--t2)">跳过</span><span>fast=15.88 < slow=15.42 但 close < fast</span></div>
+  </div></div></div>`
+},
+optimize(){
+  return `<div class="ph"><div><h1>参数优化</h1><p class="sub">网格搜索最优参数组合</p></div><button class="bp">▶ 开始优化</button></div>
+  <div class="cr"><div class="cd cfg"><h3>优化设置</h3><label>优化方法</label><select class="sel"><option>网格搜索</option><option>随机搜索</option><option>贝叶斯优化</option></select>
+  <label>最大组合数</label><input type="number" value="100" class="inp">
+  <label>优化目标</label><select class="sel"><option>sharpe_ratio</option><option>total_return</option><option>max_drawdown</option></select>
+  <label>并行进程数</label><input type="number" value="4" class="inp"></div>
+  <div class="cd cfg"><h3>参数范围</h3><table class="tb"><thead><tr><th>参数</th><th>最小值</th><th>最大值</th><th>步长</th></tr></thead><tbody>
+  <tr><td>fast_period</td><td><input type="number" value="3" class="inp" style="width:60px"></td><td><input type="number" value="10" class="inp" style="width:60px"></td><td><input type="number" value="1" class="inp" style="width:60px"></td></tr>
+  <tr><td>slow_period</td><td><input type="number" value="15" class="inp" style="width:60px"></td><td><input type="number" value="30" class="inp" style="width:60px"></td><td><input type="number" value="5" class="inp" style="width:60px"></td></tr>
+  </tbody></table></div></div>
+  <div class="cd" style="margin-top:16px"><div class="ch"><span>📊 优化结果</span><span class="tg">共 56 组有效结果</span></div><table class="tb"><thead><tr><th>排名</th><th>fast_period</th><th>slow_period</th><th>sharpe_ratio</th><th>total_return</th><th>max_drawdown</th></tr></thead><tbody>
+  <tr style="background:#f0fdf4"><td>🥇 1</td><td>5</td><td>20</td><td style="color:#10b981;font-weight:600">1.86</td><td style="color:#10b981">+18.42%</td><td style="color:#ef4444">-8.73%</td></tr>
+  <tr><td>🥈 2</td><td>6</td><td>25</td><td style="color:#10b981">1.72</td><td style="color:#10b981">+15.31%</td><td style="color:#ef4444">-9.12%</td></tr>
+  <tr><td>🥉 3</td><td>4</td><td>18</td><td style="color:#10b981">1.65</td><td style="color:#10b981">+14.87%</td><td style="color:#ef4444">-10.45%</td></tr>
+  <tr><td>4</td><td>7</td><td>22</td><td>1.58</td><td style="color:#10b981">+12.94%</td><td style="color:#ef4444">-11.23%</td></tr>
+  <tr><td>5</td><td>3</td><td>15</td><td>1.42</td><td style="color:#10b981">+10.56%</td><td style="color:#ef4444">-13.67%</td></tr>
+  </tbody></table></div>`
+},
+history(){
+  return `<div class="ph"><div><h1>回测历史</h1><p class="sub">查看历史回测记录</p></div><button class="bo" style="color:#ef4444">🗑️ 清空历史</button></div>
+  <div class="cd"><table class="tb"><thead><tr><th>时间</th><th>策略</th><th>标的</th><th>收益率</th><th>最大回撤</th><th>夏普比率</th><th>操作</th></tr></thead><tbody>
+  ${[['2025-06-04 10:30','双均线策略','000001.SZ','+18.42%','#10b981','-8.73%','1.86'],['2025-06-03 14:20','RSI 策略','600519.SH','+12.56%','#10b981','-12.34%','1.45'],['2025-06-02 09:15','布林带策略','000333.SZ','+9.87%','#10b981','-6.54%','1.62'],['2025-06-01 16:45','MACD 策略','300750.SZ','+21.34%','#10b981','-15.67%','1.32'],['2025-05-30 11:00','动量策略','000651.SZ','+8.91%','#10b981','-11.89%','1.18']].map(r=>`<tr><td style="font-size:12px;color:var(--t2)">${r[0]}</td><td class="sym">${r[1]}</td><td>${r[2]}</td><td style="color:${r[4]};font-weight:500">${r[3]}</td><td style="color:#ef4444">${r[5]}</td><td>${r[6]}</td><td><button class="bs">查看</button> <button class="bs" style="color:#ef4444">删除</button></td></tr>`).join('')}</tbody></table></div>`
+},
+walkforward(){
+  return `<div class="ph"><div><h1>Walk-Forward 分析</h1><p class="sub">滚动窗口验证策略稳健性</p></div><button class="bp">▶ 开始分析</button></div>
+  <div class="cr"><div class="cd cfg"><h3>窗口设置</h3>
+  <label>训练窗口（天）</label><input type="number" value="252" class="inp">
+  <label>测试窗口（天）</label><input type="number" value="63" class="inp">
+  <label>步进（天）</label><input type="number" value="63" class="inp">
+  <label>总窗口数</label><input type="number" value="8" class="inp" readonly></div>
+  <div class="cd cfg"><h3>每个窗口结果</h3><table class="tb"><thead><tr><th>窗口</th><th>训练期</th><th>测试期</th><th>测试收益</th><th>状态</th></tr></thead><tbody>
+  <tr><td>1</td><td>2022-01~2023-01</td><td>2023-01~2023-04</td><td style="color:#10b981">+5.23%</td><td><span class="sd b">通过</span></td></tr>
+  <tr><td>2</td><td>2022-04~2023-04</td><td>2023-04~2023-07</td><td style="color:#ef4444">-2.14%</td><td><span class="sd s">失败</span></td></tr>
+  <tr><td>3</td><td>2022-07~2023-07</td><td>2023-07~2023-10</td><td style="color:#10b981">+3.87%</td><td><span class="sd b">通过</span></td></tr>
+  <tr><td>4</td><td>2022-10~2023-10</td><td>2023-10~2024-01</td><td style="color:#10b981">+7.12%</td><td><span class="sd b">通过</span></td></tr>
+  <tr><td>5</td><td>2023-01~2024-01</td><td>2024-01~2024-04</td><td style="color:#10b981">+4.56%</td><td><span class="sd b">通过</span></td></tr>
+  </tbody></table></div></div>`
+},
+compare(){
+  return `<div class="ph"><div><h1>多标的对比</h1><p class="sub">对比不同标的的回测表现</p></div></div>
+  <div class="cd" style="margin-bottom:16px"><div class="ch"><span>📊 对比结果</span></div>
+  <table class="tb"><thead><tr><th>标的</th><th>收益率</th><th>年化收益</th><th>最大回撤</th><th>夏普比率</th><th>胜率</th><th>总交易</th></tr></thead><tbody>
+  <tr><td class="sym">000001.SZ</td><td style="color:#10b981;font-weight:600">+18.42%</td><td>+12.68%</td><td style="color:#ef4444">-8.73%</td><td>1.86</td><td>65.96%</td><td>47</td></tr>
+  <tr><td class="sym">600519.SH</td><td style="color:#10b981">+12.56%</td><td>+8.91%</td><td style="color:#ef4444">-12.34%</td><td>1.45</td><td>58.33%</td><td>36</td></tr>
+  <tr><td class="sym">000333.SZ</td><td style="color:#10b981">+9.87%</td><td>+6.84%</td><td style="color:#ef4444">-6.54%</td><td>1.62</td><td>72.00%</td><td>25</td></tr>
+  <tr><td class="sym">300750.SZ</td><td style="color:#10b981">+21.34%</td><td>+14.67%</td><td style="color:#ef4444">-15.67%</td><td>1.32</td><td>55.56%</td><td>54</td></tr>
+  <tr><td class="sym">000651.SZ</td><td style="color:#10b981">+8.91%</td><td>+6.18%</td><td style="color:#ef4444">-11.89%</td><td>1.18</td><td>61.11%</td><td>36</td></tr>
+  </tbody></table></div>
+  <div class="cd"><div class="ch"><span>📈 收益率对比图</span></div>${eqChart()}</div>`
+},
+scheduler(){
+  return `<div class="ph"><div><h1>更新调度</h1><p class="sub">自动定时获取最新数据</p></div><button class="bp">▶ 立即执行</button></div>
+  <div class="cr"><div class="cd cfg"><h3>调度配置</h3>
+  <label>执行频率</label><select class="sel"><option>每日 18:00</option><option>每 6 小时</option><option>每周一</option></select>
+  <label>数据源</label><div class="radio"><label><input type="checkbox" checked> AKShare</label><label><input type="checkbox" checked> Yahoo Finance</label><label><input type="checkbox"> Tushare</label></div>
+  <label>更新范围</label><select class="sel"><option>增量更新（仅最新数据）</option><option>全量更新</option></select></div>
+  <div class="cd"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:#111">执行历史</h3><table class="tb"><thead><tr><th>时间</th><th>状态</th><th>更新数量</th><th>耗时</th></tr></thead><tbody>
+  <tr><td>2025-06-05 18:00</td><td><span class="sd b">成功</span></td><td>1,234 条</td><td>45s</td></tr>
+  <tr><td>2025-06-04 18:00</td><td><span class="sd b">成功</span></td><td>1,198 条</td><td>42s</td></tr>
+  <tr><td>2025-06-03 18:00</td><td><span class="sd s">失败</span></td><td>0 条</td><td>120s</td></tr>
+  <tr><td>2025-06-02 18:00</td><td><span class="sd b">成功</span></td><td>1,156 条</td><td>38s</td></tr>
+  <tr><td>2025-06-01 18:00</td><td><span class="sd b">成功</span></td><td>1,203 条</td><td>41s</td></tr>
+  </tbody></table></div></div>`
+}
+};
+
+// ── 导航渲染 ──
+let cur='dashboard';
+function renderNav(){
+  const nav=document.getElementById('nav');
+  nav.innerHTML=NAV.map(g=>`<div class="ng"><div class="ng-t">${g.g}</div>${g.i.map(it=>`<div class="ni${cur===it.id?' a':''}" data-p="${it.id}"><span class="ni-i">${it.ic}</span><span>${it.l}</span>${it.b?`<span class="bdg">${it.b}</span>`:''}</div>`).join('')}</div>`).join('');
+  nav.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>{cur=el.dataset.p;renderNav();renderPage()}));
+}
+function renderPage(){
+  document.getElementById('main').innerHTML=PAGES[cur]?PAGES[cur]():'';
+  // Editor file click
+  if(cur==='editor'){
+    document.querySelectorAll('.ef').forEach(el=>el.addEventListener('click',()=>{
+      document.querySelectorAll('.ef').forEach(f=>f.classList.remove('a'));
+      el.classList.add('a');
+      const i=+el.dataset.i;
+      document.getElementById('fname').textContent=STRATS[i].n;
+    }));
+  }
+}
+renderNav();renderPage();
+</script>
+</body>
+</html>
